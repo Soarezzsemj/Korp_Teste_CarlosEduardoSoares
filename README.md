@@ -67,6 +67,18 @@ docker compose up --build -d
 | Estoque API | http://localhost:5190/scalar/v1 | Documentação Interativa Scalar / OpenAPI |
 | SQL Server | localhost:1433 | Banco de Dados Relacional |
 
+### Acesso ao Banco de Dados
+
+Caso queira inspecionar as tabelas via DBeaver, SSMS ou VS Code:
+
+- **Host:** `localhost`
+- **Porta:** `1433`
+- **Usuário:** `sa`
+- **Senha:** `KorpErp2026!`
+- **Bancos criados:** `Korp_Estoque_DB` e `Korp_Faturamento_DB`
+- **Connection String rápida:**
+  `Server=localhost,1433;Database=master;User Id=sa;Password=KorpErp2026!;TrustServerCertificate=True;`
+
 ---
 
 ## Principais Fluxos e Regras de Negócio Implementadas
