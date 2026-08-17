@@ -75,7 +75,7 @@ namespace FaturamentoService.Controllers
                     DescricaoProduto = i.DescricaoProduto,
                     Quantidade = i.Quantidade,
                     PrecoUnitario = i.PrecoUnitario
-                }).ToList(),
+                }).ToList()
             };
 
             _context.NotaFiscais.Add(novaNota);
@@ -136,7 +136,6 @@ namespace FaturamentoService.Controllers
         [ProducesResponseType(StatusCodes.Status502BadGateway)]
         public async Task<IActionResult> CancelarNota(int id)
         {
-
             var nota = await _context.NotaFiscais
                 .Include(n => n.Itens)
                 .FirstOrDefaultAsync(n => n.Id == id);
@@ -146,35 +145,35 @@ namespace FaturamentoService.Controllers
                 return NotFound($"Nota Fiscal {id} não encontrada.");
             }
 
-
             if (nota.Status == StatusNotaFiscal.Cancelada)
             {
                 return BadRequest("Esta nota fiscal já está cancelada.");
             }
 
-
-            var client = _httpClientFactory.CreateClient("EstoqueService");
-            var payload = new
+            if (nota.Status == StatusNotaFiscal.Fechada)
             {
-                itens = nota.Itens.Select(i => new
+                var client = _httpClientFactory.CreateClient("EstoqueService");
+                var payload = new
                 {
-                    produtoId = i.ProdutoId,
-                    quantidade = i.Quantidade
-                }).ToList()
-            };
+                    itens = nota.Itens.Select(i => new
+                    {
+                        produtoId = i.ProdutoId,
+                        quantidade = i.Quantidade
+                    }).ToList()
+                };
 
-            var respostaEstoque = await client.PostAsJsonAsync("api/Produtos/adicionar-saldo", payload);
+                var respostaEstoque = await client.PostAsJsonAsync("api/Produtos/adicionar-saldo", payload);
 
-            if (!respostaEstoque.IsSuccessStatusCode)
-            {
-                return StatusCode((int)respostaEstoque.StatusCode, "Erro ao devolver itens ao estoque.");
+                if (!respostaEstoque.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)respostaEstoque.StatusCode, "Erro ao devolver itens ao estoque.");
+                }
             }
 
-
-            nota.Status = (StatusNotaFiscal)3;
+            nota.Status = StatusNotaFiscal.Cancelada;
             await _context.SaveChangesAsync();
 
-            return Ok(new { mensagem = $"Nota Fiscal {nota.NumeroNota} cancelada e estoque estornado com sucesso." });
+            return Ok(new { mensagem = $"Nota Fiscal {nota.NumeroNota} cancelada com sucesso." });
         }
 
 

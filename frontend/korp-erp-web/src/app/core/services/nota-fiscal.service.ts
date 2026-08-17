@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { NotaFiscal, CriarNotaFiscalDto } from '../models/nota-fiscal.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotaFiscalService {
-  private readonly apiUrl = 'http://localhost:5169/api/NotaFiscal';
+  private readonly apiUrl = `${environment.apiUrlFaturamento}/NotaFiscal`;
 
   constructor(private http: HttpClient) {}
 
@@ -27,8 +28,7 @@ export class NotaFiscalService {
     return this.http.post(`${this.apiUrl}/${id}/imprimir`, {});
   }
 
-cancelar(id: number): Observable<any> {
+  cancelar(id: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}/cancelar`, {});
   }
-
 }

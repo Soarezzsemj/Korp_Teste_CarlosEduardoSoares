@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuração CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -16,6 +17,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+// Configuração do Scalar
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -50,6 +52,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+// Execução automática de Migrations com retry para Docker
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var db = services.GetRequiredService<AppDbContext>();
+
+    for (int retry = 0; retry < 5; retry++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            logger.LogInformation("Banco de dados sincronizado e migrations aplicadas.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning($"Aguardando SQL Server... Tentativa {retry + 1}/5. Detalhe: {ex.Message}");
+            Thread.Sleep(3000);
+        }
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -63,8 +88,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAngular");
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

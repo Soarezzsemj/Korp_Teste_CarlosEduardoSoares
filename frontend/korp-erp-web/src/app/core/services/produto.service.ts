@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Produto } from '../models/produto.model';
+import { environment } from '../../../environments/environment';
+import { Produto, CriarProdutoDto, AdicionarProdutoDto } from '../models/produto.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProdutoService {
-  private readonly apiUrl = 'http://localhost:5190/api/produtos';
+  private readonly apiUrl = `${environment.apiUrlEstoque}/Produtos`;
 
   constructor(private http: HttpClient) {}
 
@@ -15,7 +16,15 @@ export class ProdutoService {
     return this.http.get<Produto[]>(this.apiUrl);
   }
 
-  criar(produto: Produto): Observable<Produto> {
-    return this.http.post<Produto>(this.apiUrl, produto);
+  obterPorId(id: number): Observable<Produto> {
+    return this.http.get<Produto>(`${this.apiUrl}/${id}`);
+  }
+
+  criar(dto: CriarProdutoDto): Observable<Produto> {
+    return this.http.post<Produto>(this.apiUrl, dto);
+  }
+
+  atualizarEstoque(id: number, dto: AdicionarProdutoDto): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, dto);
   }
 }
