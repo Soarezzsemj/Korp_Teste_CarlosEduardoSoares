@@ -5,7 +5,7 @@ services:
     container_name: korp-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=SuaSenhaForte@2026
+      - MSSQL_SA_PASSWORD=KorpErp2026!
     ports:
       - "1433:1433"
     networks:
@@ -25,7 +25,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5190
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Estoque_DB;User Id=sa;Password=SuaSenhaForte@2026;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Estoque_DB;User Id=sa;Password=KorpErp2026!;TrustServerCertificate=True;
     ports:
       - "5190:5190"
     depends_on:
@@ -43,7 +43,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5169
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Faturamento_DB;User Id=sa;Password=SuaSenhaForte@2026;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Faturamento_DB;User Id=sa;Password=KorpErp2026!;TrustServerCertificate=True;
       - EstoqueService__BaseUrl=http://estoque-service:5190
     ports:
       - "5169:5169"
