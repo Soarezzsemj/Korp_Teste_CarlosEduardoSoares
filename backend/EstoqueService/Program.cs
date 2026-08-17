@@ -1,10 +1,10 @@
-using EstoqueService.Data;
+ï»¿using EstoqueService.Data;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração CORS
+// ConfiguraÃ§Ã£o CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -17,23 +17,25 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// Configuração do Scalar
+// ConfiguraÃ§Ã£o do Scalar
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        document.Info.Title = "Korp ERP - Serviço de Estoque";
+        document.Info.Title = "Korp ERP - ServiÃ§o de Estoque";
         document.Info.Version = "v1.0";
         document.Info.Description =
-            "Microsserviço de Estoque desenvolvido por Carlos Eduardo Soares Souza Santos para o Projeto técnico de Sistema de emissão de Notas Fiscais.\n\n" +
+            "MicrosserviÃ§o de Estoque desenvolvido por Carlos Eduardo Soares Souza Santos para o Projeto tÃ©cnico de Sistema de emissÃ£o de Notas Fiscais.\n\n" +
+            "**DocumentaÃ§Ã£o Relacionada:**\n" +
+            "- **ServiÃ§o de Faturamento (Scalar UI):** [http://localhost:5169/scalar/v1](http://localhost:5169/scalar/v1)\n\n" +
             "**Mais sobre mim:**\n" +
-            "- **Portfólio:** [soarezzsemj.github.io/Portfolio-Carlos-Eduardo](https://soarezzsemj.github.io/Portfolio-Carlos-Eduardo/)\n" +
+            "- **PortfÃ³lio:** [soarezzsemj.github.io/Portfolio-Carlos-Eduardo](https://soarezzsemj.github.io/Portfolio-Carlos-Eduardo/)\n" +
             "- **GitHub:** [github.com/Soarezzsemj](https://github.com/Soarezzsemj)\n" +
             "- **LinkedIn:** [linkedin.com/in/carlos-eduardo-soares](https://www.linkedin.com/in/carlos-eduardo-soares-081419343/)\n\n" +
             "**Funcionalidades:**\n" +
-            "- Cadastro, edição e consulta de produtos e saldos.\n" +
-            "- Abatimento e devolução de estoque com concorrência otimista (RowVersion).\n" +
-            "- Persistência física em banco de dados SQL Server.";
+            "- Cadastro, ediÃ§Ã£o e consulta de produtos e saldos.\n" +
+            "- Abatimento e devoluÃ§Ã£o de estoque com concorrÃªncia otimista (RowVersion).\n" +
+            "- PersistÃªncia fÃ­sica em banco de dados SQL Server.";
 
         document.Info.Contact = new()
         {
@@ -52,7 +54,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Execução automática de Migrations com retry para Docker
+// ExecuÃ§Ã£o automÃ¡tica de Migrations com retry para Docker
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -81,7 +83,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(options =>
     {
         options
-            .WithTitle("Teste Técnico Korp - Estoque API")
+            .WithTitle("Teste TÃ©cnico Korp - Estoque API")
             .WithTheme(ScalarTheme.Mars)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });

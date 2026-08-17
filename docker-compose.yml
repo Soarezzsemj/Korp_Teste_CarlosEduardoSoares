@@ -72,3 +72,13 @@ services:
 networks:
   korp-network:
     driver: bridge
+
+db-admin:
+    image: adminer:latest
+    container_name: korp-db-admin
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - korp-network

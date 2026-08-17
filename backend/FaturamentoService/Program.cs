@@ -1,10 +1,10 @@
-using FaturamentoService.Data;
+ï»¿using FaturamentoService.Data;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração CORS
+// ConfiguraÃ§Ã£o CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -17,25 +17,37 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// Configuração da Documentação Scalar
+// ConfiguraÃ§Ã£o da DocumentaÃ§Ã£o Scalar
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        document.Info.Title = "Korp ERP - Serviço de Faturamento";
+        document.Info.Title = "Korp ERP - ServiÃ§o de Faturamento";
         document.Info.Version = "v1.0";
         document.Info.Description =
-            "Microsserviço de Faturamento desenvolvido para o projeto técnico de Sistema de Emissão de Notas Fiscais.\n\n" +
+            "MicrosserviÃ§o de Faturamento desenvolvido por Carlos Eduardo Soares Souza Santos para o Projeto tÃ©cnico de Sistema de emissÃ£o de Notas Fiscais.\n\n" +
+            "**DocumentaÃ§Ã£o Relacionada:**\n" +
+            "- **ServiÃ§o de Estoque (Scalar UI):** [http://localhost:5190/scalar/v1](http://localhost:5190/scalar/v1)\n\n" +
+            "**Mais sobre mim:**\n" +
+            "- **PortfÃ³lio:** [soarezzsemj.github.io/Portfolio-Carlos-Eduardo](https://soarezzsemj.github.io/Portfolio-Carlos-Eduardo/)\n" +
+            "- **GitHub:** [github.com/Soarezzsemj](https://github.com/Soarezzsemj)\n" +
+            "- **LinkedIn:** [linkedin.com/in/carlos-eduardo-soares](https://www.linkedin.com/in/carlos-eduardo-soares-081419343/)\n\n" +
             "**Funcionalidades:**\n" +
-            "- Emissão e fechamento de Notas Fiscais.\n" +
-            "- Comunicação síncrona HTTP com o microsserviço de Estoque para validação, baixa física e estorno de saldos.\n" +
-            "- Persistência física em banco de dados SQL Server.";
+            "- CriaÃ§Ã£o, cancelamento e fechamento sequencial de Notas Fiscais.\n" +
+            "- ComunicaÃ§Ã£o sÃ­ncrona HTTP via HttpClientFactory com o microsserviÃ§o de Estoque para validaÃ§Ã£o de saldo prÃ©vio, baixa fÃ­sica e estorno.\n" +
+            "- PersistÃªncia fÃ­sica em banco de dados SQL Server.";
+
+        document.Info.Contact = new()
+        {
+            Name = "Carlos Eduardo Soares Souza Santos",
+            Url = new Uri("https://soarezzsemj.github.io/Portfolio-Carlos-Eduardo/")
+        };
 
         return Task.CompletedTask;
     });
 });
 
-//comunicação com o EstoqueService
+//comunicaÃ§Ã£o com o EstoqueService
 builder.Services.AddHttpClient("EstoqueService", client =>
 {
     var baseUrl = builder.Configuration["EstoqueService:BaseUrl"] ?? "http://localhost:5190/";
@@ -49,7 +61,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Execução automática de Migrations com retry para aguardar o SQL Server no Docker
+// ExecuÃ§Ã£o automÃ¡tica de Migrations com retry para aguardar o SQL Server no Docker
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -79,7 +91,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(options =>
     {
         options
-            .WithTitle("Teste Técnico Korp - Faturamento API")
+            .WithTitle("Teste TÃ©cnico Korp - Faturamento API")
             .WithTheme(ScalarTheme.Mars)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
