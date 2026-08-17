@@ -25,20 +25,42 @@ namespace FaturamentoService.Controllers
 
         [HttpPost]
         [EndpointSummary("Criar nova Nota Fiscal")]
-        [EndpointDescription("Cadastra uma nova nota fiscal sequencial com status inicial 'Aberta'. O saldo dos produtos no estoque não é abatido nesta etapa.")]
+        [EndpointDescription("Cadastra uma nova nota fiscal sequencial validando a disponibilidade prévia no microsserviço de Estoque.")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task <ActionResult<NotaFiscalModel>> CriarNotaFiscal([FromBody] CriarNotaFiscalDTO dto)
+        public async Task<ActionResult<NotaFiscalModel>> CriarNotaFiscal([FromBody] CriarNotaFiscalDTO dto)
         {
             if (dto.Itens == null || !dto.Itens.Any())
             {
-                return BadRequest(new { mensagem = "A nota fiscal deve conter pelo menos um item."});
+                return BadRequest(new { mensagem = "A nota fiscal deve conter pelo menos um item." });
+            }
+
+            var client = _httpClientFactory.CreateClient("EstoqueService");
+
+            // validação do saldo de cada item da nota para nao conseguir tirar mais itens do que tem 
+            foreach (var item in dto.Itens)
+            {
+                var response = await client.GetAsync($"api/Produtos/{item.ProdutoId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var produto = await response.Content.ReadFromJsonAsync<ProdutoConsultaDto>();
+                    if (produto != null && produto.Saldo < item.Quantidade)
+                    {
+                        return BadRequest(new
+                        {
+                            mensagem = $"Saldo insuficiente para o produto '{produto.Descricao}'. Disponível: {produto.Saldo}, Solicitado: {item.Quantidade}."
+                        });
+                    }
+                }
+                else
+                {
+                    return BadRequest(new { mensagem = $"Produto ID {item.ProdutoId} não encontrado no estoque." });
+                }
             }
 
             var totalNotasExistentes = await _context.NotaFiscais.CountAsync();
             var proximoNumero = totalNotasExistentes + 1;
             var numeroNotaSequencial = $"NF-{proximoNumero:D4}";
-
 
             var novaNota = new NotaFiscalModel
             {
@@ -90,6 +112,11 @@ namespace FaturamentoService.Controllers
                 .Include(n => n.Itens) // chama o item associado a nota fiscal
                 .AsNoTracking()
                 .FirstOrDefaultAsync(n => n.Id == id); // pega pelo id
+
+            if (notaID == null)
+            {
+                return NotFound(new { mensagem = $"Nota fiscal com ID {id} não encontrada." });
+            }
 
             return Ok(notaID);
 
@@ -163,7 +190,7 @@ namespace FaturamentoService.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> ImprimirNota(int id)
         {
-           
+
             var nota = await _context.NotaFiscais
                 .Include(n => n.Itens)
                 .FirstOrDefaultAsync(n => n.Id == id);
@@ -173,13 +200,13 @@ namespace FaturamentoService.Controllers
                 return NotFound($"Nota fiscal com ID {id} não encontrada.");
             }
 
-            
+
             if (nota.Status != StatusNotaFiscal.Aberta)
             {
                 return BadRequest($"Apenas notas com status 'Aberta' podem ser impressas. Status atual: {nota.Status}");
             }
 
-            
+
             var client = _httpClientFactory.CreateClient("EstoqueService");
             var payloadAbate = new
             {
@@ -199,21 +226,20 @@ namespace FaturamentoService.Controllers
                     var erroEstoque = await respostaEstoque.Content.ReadAsStringAsync();
                     return StatusCode((int)respostaEstoque.StatusCode, new
                     {
-                        mensagem = "Não foi possível imprimir a nota devido a uma falha no estoque.",
-                        detalhes = erroEstoque
+                        mensagem = erroEstoque
                     });
                 }
             }
             catch (HttpRequestException)
             {
-                
+
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, new
                 {
                     mensagem = "Serviço de Estoque temporariamente indisponível. A nota permaneceu Aberta."
                 });
             }
 
-            
+
             nota.Status = StatusNotaFiscal.Fechada;
             await _context.SaveChangesAsync();
 

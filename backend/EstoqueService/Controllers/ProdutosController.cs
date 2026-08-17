@@ -41,9 +41,9 @@ namespace EstoqueService.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<ProdutosModel> BuscarProdutosPorId(int id)
         {
-            var produto = _context.Produtos.Find(id);  
+            var produto = _context.Produtos.Find(id);
 
-            if(produto == null)
+            if (produto == null)
             {
                 return NotFound();
             }
@@ -60,25 +60,54 @@ namespace EstoqueService.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public ActionResult<ProdutosModel> CriarProduto([FromBody] CriarProdutoDto dto)
         {
-           if(dto == null)
+            if (dto == null)
             {
-                return BadRequest("Ocorreu um erro na solicitação");
+                return BadRequest(new { mensagem = "Ocorreu um erro na solicitação." });
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Descricao))
+            {
+                return BadRequest(new { mensagem = "A descrição do produto é obrigatória." });
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Codigo))
+            {
+                return BadRequest(new { mensagem = "O código do produto é obrigatório." });
+            }
+
+            var descricaoNormalizada = dto.Descricao.Trim().ToLower();
+            var codigoNormalizado = dto.Codigo.Trim().ToLower();
+
+            
+            var descricaoJaExiste = _context.Produtos
+                .Any(p => p.Descricao.Trim().ToLower() == descricaoNormalizada);
+
+            if (descricaoJaExiste)
+            {
+                return BadRequest(new { mensagem = "Já existe um produto cadastrado com esta mesma descrição." });
+            }
+
+            
+            var codigoJaExiste = _context.Produtos
+                .Any(p => p.Codigo.Trim().ToLower() == codigoNormalizado);
+
+            if (codigoJaExiste)
+            {
+                return BadRequest(new { mensagem = "Já existe um produto cadastrado com este mesmo código." });
             }
 
             var novoProduto = new ProdutosModel
             {
-                Codigo = dto.Codigo,
-                Descricao = dto.Descricao,
+                Codigo = dto.Codigo.Trim(),
+                Descricao = dto.Descricao.Trim(),
                 Saldo = dto.Saldo,
                 DataCriacao = DateTime.Now
             };
 
-
-
-           _context.Produtos.Add(novoProduto);
+            _context.Produtos.Add(novoProduto);
             _context.SaveChanges();
-    
-                return CreatedAtAction(nameof(BuscarProdutosPorId), new { id = novoProduto.Id }, novoProduto);
+
+            return CreatedAtAction(nameof(BuscarProdutosPorId), new { id = novoProduto.Id }, novoProduto);
         }
 
 
@@ -96,24 +125,24 @@ namespace EstoqueService.Controllers
             if (dto == null || !dto.Itens.Any())
             {
                 return BadRequest("Ocorreu um erro na solicitação");
-            }   
+            }
 
-            foreach(var item in dto.Itens)
+            foreach (var item in dto.Itens)
             {
                 var produto = await _context.Produtos.FindAsync(item.ProdutoId);
-                if(produto == null)
+                if (produto == null)
                 {
                     return NotFound($"Produto com ID {item.ProdutoId} não encontrado.");
                 }
 
-                if(produto.Saldo < item.Quantidade)
+                if (produto.Saldo < item.Quantidade)
                 {
                     return BadRequest($"Saldo insuficiente para o produto com ID {item.ProdutoId}. Saldo atual: {produto.Saldo}, quantidade solicitada: {item.Quantidade}");
                 }
             }
 
 
-            foreach(var item in dto.Itens)
+            foreach (var item in dto.Itens)
             {
                 var produto = await _context.Produtos.FindAsync(item.ProdutoId);
                 produto.Saldo -= item.Quantidade;
@@ -121,7 +150,8 @@ namespace EstoqueService.Controllers
 
 
 
-            try{
+            try
+            {
                 await _context.SaveChangesAsync();
 
                 return Ok("Saldo abatido com sucesso.");
@@ -134,7 +164,7 @@ namespace EstoqueService.Controllers
 
             }
 
-            
+
         }
 
 
@@ -181,12 +211,12 @@ namespace EstoqueService.Controllers
             if (dto == null || dto.Saldo <= 0)
             {
                 return BadRequest("Ocorreu um erro na solicitação");
-            }   
+            }
 
 
             var produto = _context.Produtos.Find(id);
 
-            if(produto == null)
+            if (produto == null)
             {
                 return NotFound("Registro nao encontrado");
             }

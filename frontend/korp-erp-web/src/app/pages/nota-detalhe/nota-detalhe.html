@@ -1,0 +1,116 @@
+<div class="max-w-4xl mx-auto p-6 space-y-6">
+  <div class="flex items-center justify-between print:hidden border-b pb-4">
+    <a routerLink="/notas" class="text-xs font-medium text-slate-600 hover:text-slate-900">
+      ← Voltar para Notas Fiscais
+    </a>
+    
+    <div class="flex items-center gap-3">
+      <!-- dar baixa na nota -->
+      @if (nota && isAberta()) {
+        <button 
+          (click)="fecharNota()" 
+          [disabled]="fechando || cancelando"
+          class="px-4 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-1.5 shadow-sm">
+          @if (fechando) {
+            <span class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+          }
+          {{ fechando ? 'Baixando Estoque...' : 'Fechar Nota (Baixar Estoque)' }}
+        </button>
+      }
+
+      <!-- cancelar nota -->
+      @if (nota && !isCancelada()) {
+        <button 
+          (click)="cancelarNota()" 
+          [disabled]="cancelando || fechando"
+          class="px-4 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50 transition flex items-center gap-1.5 shadow-sm">
+          @if (cancelando) {
+            <span class="h-3 w-3 animate-spin rounded-full border-2 border-red-700 border-t-transparent"></span>
+          }
+          {{ cancelando ? 'Cancelando...' : 'Cancelar Nota' }}
+        </button>
+      }
+
+      <!-- botao de gerar pdf / imprimir -->
+      <button 
+        (click)="gerarPdf()" 
+        class="px-4 py-2 text-xs font-medium text-slate-800 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
+        <span></span> Clique aqui para Gerar o PDF / Imprimir <span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- alerta -->
+  @if (mensagemSucesso) {
+    <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm print:hidden">
+      {{ mensagemSucesso }}
+    </div>
+  }
+  @if (mensagemErro) {
+    <div class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm print:hidden">
+      {{ mensagemErro }}
+    </div>
+  }
+
+  <!-- nota fiscal -->
+  @if (nota) {
+    <div class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm print:border-none print:shadow-none space-y-6">
+      
+      <div class="flex justify-between items-start border-b pb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">DANFE / Nota Fiscal</h2>
+          <p class="text-xs text-slate-500 font-mono">Nº {{ nota.numeroNota || ('NF-' + nota.id) }}</p>
+        </div>
+        <div class="text-right">
+          <span [class]="isAberta() ? 'bg-amber-50 text-amber-700 border-amber-200' : (isCancelada() ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200')"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border">
+            Status: {{ obterStatusTexto() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- dados do destinatario -->
+      <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+        <div>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Cliente / Destinatário</p>
+          <p class="text-sm font-bold text-slate-800">{{ nota.cliente }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Data de Emissão</p>
+          <p class="text-sm text-slate-700">{{ (nota.criadoEm || nota.dataEmissao || nota.dataCriacao) | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </div>
+
+      <!-- itens da nota -->
+      <table class="w-full text-sm text-left">
+        <thead class="bg-slate-100/70 border-b border-slate-200 text-slate-600 text-xs font-semibold uppercase">
+          <tr>
+            <th class="py-3 px-4">Item / Produto</th>
+            <th class="py-3 px-4 text-center">Qtd</th>
+            <th class="py-3 px-4 text-right">Preço Unit.</th>
+            <th class="py-3 px-4 text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (item of nota.itens; track item.id ?? $index) {
+            <tr>
+              <td class="py-3 px-4 font-medium text-slate-800">{{ item.descricaoProduto || ('Produto #' + item.produtoId) }}</td>
+              <td class="py-3 px-4 text-center">{{ item.quantidade }}</td>
+              <td class="py-3 px-4 text-right">{{ item.precoUnitario | currency:'BRL' }}</td>
+              <td class="py-3 px-4 text-right font-medium">{{ (item.quantidade * item.precoUnitario) | currency:'BRL' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- total da nota -->
+      <div class="flex justify-end pt-4 border-t">
+        <div class="text-right space-y-1">
+          <p class="text-xs text-slate-500">Valor Total da Nota:</p>
+          <p class="text-2xl font-bold text-slate-900">{{ nota.valorTotal | currency:'BRL' }}</p>
+        </div>
+      </div>
+
+    </div>
+  }
+</div>
