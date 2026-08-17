@@ -1,59 +1,56 @@
-# KorpErpWeb
+# Korp ERP Web - Interface Frontend (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.4.
+Interface Single Page Application (SPA) desenvolvida em **Angular** utilizando a arquitetura moderna de **Standalone Components** e estilizada com **Tailwind CSS**.
 
-## Development server
+---
 
-To start a local development server, run:
+## Funcionalidades da Interface
 
-```bash
-ng serve
-```
+* **Painel de Gestão de Estoque (`/produtos`):**
+  * Cadastro de produtos com código, descrição e saldo inicial.
+  * Validações de formulário reativas com feedback em tempo real.
+  * Listagem com badges indicativos de disponibilidade de estoque.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+* **Central de Faturamento (`/notas`):**
+  * Modal dinâmico de emissão de NF com adição múltipla de itens.
+  * Cálculo dinâmico do total da nota e verificação visual/lógica de saldo disponível.
+  * Tabela com tags de status padronizadas (**Aberta**, **Fechada**, **Cancelada**).
 
-## Code scaffolding
+* **Espelho e Detalhe da Nota Fiscal (`/notas/:id`):**
+  * Layout DANFE pronto para impressão e exportação em PDF (`window.print()`).
+  * Ação de **Fechar Nota**, disparando a baixa atômica de saldo no backend.
+  * Ação de **Cancelar Nota**, com diálogo de confirmação e estorno automático.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+---
 
-```bash
-ng generate component component-name
-```
+## Execução Local para Desenvolvimento
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Pré-requisitos
+* [Node.js](https://nodejs.org/) (versão 20 ou superior)
+* [Angular CLI](https://angular.dev/) instalado globalmente: `npm install -g @angular/cli`
 
-```bash
-ng generate --help
-```
+### Instalação e Execução
 
-## Building
+1. Instale as dependências:
+   ```bash
+   npm install
+   ```
 
-To build the project run:
+2. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm start
+   ```
 
-```bash
-ng build
-```
+3. Acesse no navegador:
+   ```
+   http://localhost:4200
+   ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## Build de Produção e Docker
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+O projeto utiliza um arquivo `Dockerfile` baseado em multi-stage build:
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+1. Compilação dos fontes via imagem `node:20-alpine`.
+2. Servimento dos arquivos estáticos via servidor leve `nginx:alpine` com suporte a rotas de SPA (`nginx.conf`).

@@ -1,0 +1,74 @@
+services:
+  # 1. Banco de Dados SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: korp-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SuaSenhaForte@2026
+    ports:
+      - "1433:1433"
+    networks:
+      - korp-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SuaSenhaForte@2026' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Microsserviço de Estoque (.NET)
+  estoque-service:
+    build:
+      context: ./backend/EstoqueService
+      dockerfile: Dockerfile
+    container_name: korp-estoque-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5190
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Estoque_DB;User Id=sa;Password=SuaSenhaForte@2026;TrustServerCertificate=True;
+    ports:
+      - "5190:5190"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - korp-network
+
+  # 3. Microsserviço de Faturamento (.NET)
+  faturamento-service:
+    build:
+      context: ./backend/FaturamentoService
+      dockerfile: Dockerfile
+    container_name: korp-faturamento-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5169
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Korp_Faturamento_DB;User Id=sa;Password=SuaSenhaForte@2026;TrustServerCertificate=True;
+      - EstoqueService__BaseUrl=http://estoque-service:5190
+    ports:
+      - "5169:5169"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      estoque-service:
+        condition: service_started
+    networks:
+      - korp-network
+
+  # 4. Frontend Angular (Nginx)
+  frontend:
+    build:
+      context: ./frontend/korp-erp-web
+      dockerfile: Dockerfile
+    container_name: korp-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - faturamento-service
+      - estoque-service
+    networks:
+      - korp-network
+
+networks:
+  korp-network:
+    driver: bridge
