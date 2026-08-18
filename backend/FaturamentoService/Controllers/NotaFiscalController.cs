@@ -38,24 +38,34 @@ namespace FaturamentoService.Controllers
             var client = _httpClientFactory.CreateClient("EstoqueService");
 
             // validação do saldo de cada item da nota para nao conseguir tirar mais itens do que tem 
-            foreach (var item in dto.Itens)
+            try
             {
-                var response = await client.GetAsync($"api/Produtos/{item.ProdutoId}");
-                if (response.IsSuccessStatusCode)
+                foreach (var item in dto.Itens)
                 {
-                    var produto = await response.Content.ReadFromJsonAsync<ProdutoConsultaDto>();
-                    if (produto != null && produto.Saldo < item.Quantidade)
+                    var response = await client.GetAsync($"api/Produtos/{item.ProdutoId}");
+                    if (response.IsSuccessStatusCode)
                     {
-                        return BadRequest(new
+                        var produto = await response.Content.ReadFromJsonAsync<ProdutoConsultaDto>();
+                        if (produto != null && produto.Saldo < item.Quantidade)
                         {
-                            mensagem = $"Saldo insuficiente para o produto '{produto.Descricao}'. Disponível: {produto.Saldo}, Solicitado: {item.Quantidade}."
-                        });
+                            return BadRequest(new
+                            {
+                                mensagem = $"Saldo insuficiente para o produto '{produto.Descricao}'. Disponível: {produto.Saldo}, Solicitado: {item.Quantidade}."
+                            });
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(new { mensagem = $"Produto ID {item.ProdutoId} não encontrado no estoque." });
                     }
                 }
-                else
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
                 {
-                    return BadRequest(new { mensagem = $"Produto ID {item.ProdutoId} não encontrado no estoque." });
-                }
+                    mensagem = "Serviço de Estoque temporariamente indisponível. Não foi possível validar o saldo dos produtos."
+                });
             }
 
             var totalNotasExistentes = await _context.NotaFiscais.CountAsync();
